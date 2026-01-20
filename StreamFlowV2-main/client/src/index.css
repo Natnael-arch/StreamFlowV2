@@ -1,0 +1,337 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* DARK CYBERPUNK THEME - StreamFlow */
+
+/* LIGHT MODE - Still dark for cyberpunk aesthetic */
+:root {
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
+  --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
+  
+  /* Deep Gunmetal/Black backgrounds */
+  --background: 240 10% 4%;
+  --foreground: 0 0% 98%;
+  --border: 240 8% 15%;
+  
+  /* Card surfaces */
+  --card: 240 10% 7%;
+  --card-foreground: 0 0% 98%;
+  --card-border: 240 8% 12%;
+  
+  /* Sidebar */
+  --sidebar: 240 10% 6%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-border: 240 8% 12%;
+  --sidebar-primary: 270 90% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 10% 12%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-ring: 270 90% 60%;
+  
+  /* Popover */
+  --popover: 240 10% 8%;
+  --popover-foreground: 0 0% 98%;
+  --popover-border: 240 8% 14%;
+  
+  /* Electric Purple - Primary */
+  --primary: 270 90% 60%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Secondary surfaces */
+  --secondary: 240 10% 12%;
+  --secondary-foreground: 0 0% 98%;
+  
+  /* Muted */
+  --muted: 240 8% 14%;
+  --muted-foreground: 0 0% 65%;
+  
+  /* Accent - Cyan/Blue */
+  --accent: 190 90% 50%;
+  --accent-foreground: 240 10% 4%;
+  
+  /* Destructive - Red */
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 0 0% 98%;
+  
+  --input: 240 8% 20%;
+  --ring: 270 90% 60%;
+  
+  /* Chart colors - Cyberpunk palette */
+  --chart-1: 270 90% 60%;
+  --chart-2: 190 90% 50%;
+  --chart-3: 320 80% 60%;
+  --chart-4: 142 76% 36%;
+  --chart-5: 45 93% 58%;
+  
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-heading: 'Space Grotesk', 'Inter', sans-serif;
+  
+  --radius: .5rem;
+  --shadow-2xs: 0px 2px 0px 0px hsl(270 90% 60% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(270 90% 60% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 1px 2px -1px hsl(270 90% 60% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 1px 2px -1px hsl(270 90% 60% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 2px 4px -1px hsl(270 90% 60% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 4px 6px -1px hsl(270 90% 60% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 8px 10px -1px hsl(270 90% 60% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(270 90% 60% / 0.00);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+
+  /* Custom cyberpunk colors */
+  --live: 142 76% 36%;
+  --live-foreground: 0 0% 100%;
+  --offline: 0 63% 31%;
+  --offline-foreground: 0 0% 100%;
+  --cyber-pink: 320 80% 60%;
+  --cyber-cyan: 190 90% 50%;
+
+  /* Fallback for older browsers */
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --primary-border: hsl(var(--primary));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --secondary-border: hsl(var(--secondary));
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --muted-border: hsl(var(--muted));
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --accent-border: hsl(var(--accent));
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --destructive-border: hsl(var(--destructive));
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+/* Dark mode is essentially the same for this cyberpunk theme */
+.dark {
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
+  --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
+  
+  --background: 240 10% 4%;
+  --foreground: 0 0% 98%;
+  --border: 240 8% 15%;
+  
+  --card: 240 10% 7%;
+  --card-foreground: 0 0% 98%;
+  --card-border: 240 8% 12%;
+  
+  --sidebar: 240 10% 6%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-border: 240 8% 12%;
+  --sidebar-primary: 270 90% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 240 10% 12%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-ring: 270 90% 60%;
+  
+  --popover: 240 10% 8%;
+  --popover-foreground: 0 0% 98%;
+  --popover-border: 240 8% 14%;
+  
+  --primary: 270 90% 60%;
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 240 10% 12%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --muted: 240 8% 14%;
+  --muted-foreground: 0 0% 65%;
+  
+  --accent: 190 90% 50%;
+  --accent-foreground: 240 10% 4%;
+  
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 0 0% 98%;
+  
+  --input: 240 8% 20%;
+  --ring: 270 90% 60%;
+  
+  --chart-1: 270 90% 60%;
+  --chart-2: 190 90% 50%;
+  --chart-3: 320 80% 60%;
+  --chart-4: 142 76% 36%;
+  --chart-5: 45 93% 58%;
+  
+  --shadow-2xs: 0px 2px 0px 0px hsl(270 90% 60% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(270 90% 60% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 1px 2px -1px hsl(270 90% 60% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 1px 2px -1px hsl(270 90% 60% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 2px 4px -1px hsl(270 90% 60% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 4px 6px -1px hsl(270 90% 60% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(270 90% 60% / 0.00), 0px 8px 10px -1px hsl(270 90% 60% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(270 90% 60% / 0.00);
+
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --primary-border: hsl(var(--primary));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --secondary-border: hsl(var(--secondary));
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --muted-border: hsl(var(--muted));
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --accent-border: hsl(var(--accent));
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --destructive-border: hsl(var(--destructive));
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* Pulse animation for LIVE badge */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 hsl(var(--live) / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px hsl(var(--live) / 0);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Glow effects for cyberpunk aesthetic */
+.glow-primary {
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+}
+
+.glow-accent {
+  box-shadow: 0 0 20px hsl(var(--accent) / 0.3);
+}
+
+.glow-live {
+  box-shadow: 0 0 20px hsl(var(--live) / 0.4);
+}
+
+/**
+ * Using the elevate system.
+ * Automatic contrast adjustment.
+ */
+@layer utilities {
+
+  input[type="search"]::-webkit-search-cancel-button {
+    @apply hidden;
+  }
+
+  [contenteditable][data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+  }
+
+  .no-default-hover-elevate {}
+  .no-default-active-elevate {}
+
+  .toggle-elevate::before,
+  .toggle-elevate-2::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    border-radius: inherit;
+    z-index: -1;
+  }
+
+  .toggle-elevate.toggle-elevated::before {
+    background-color: var(--elevate-2);
+  }
+
+  .border.toggle-elevate::before {
+    inset: -1px;
+  }
+
+  .hover-elevate:not(.no-default-hover-elevate),
+  .active-elevate:not(.no-default-active-elevate),
+  .hover-elevate-2:not(.no-default-hover-elevate),
+  .active-elevate-2:not(.no-default-active-elevate) {
+    position: relative;
+    z-index: 0;
+  }
+
+  .hover-elevate:not(.no-default-hover-elevate)::after,
+  .active-elevate:not(.no-default-active-elevate)::after,
+  .hover-elevate-2:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:not(.no-default-active-elevate)::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    border-radius: inherit;
+    z-index: 999;
+  }
+
+  .hover-elevate:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-1);
+  }
+
+  .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-2);
+  }
+
+  .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate:not(.no-active-interaction-elevate)::after,
+  .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
+  .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
+    inset: -1px;
+  }
+  
+  /* Tabular numbers for payment displays */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+  
+  /* Live pulse animation */
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  
+  .animate-pulse-dot {
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+}

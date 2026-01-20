@@ -1,0 +1,112 @@
+We have a working full-stack demo called StreamFlow that demonstrates real-time, per-second monetization using x402-style HTTP 402 flows. The demo works and must NOT be modified or broken.
+
+Goal
+
+Create a reusable StreamFlow SDK + Core API by extracting and reusing logic from the existing demo code, without changing demo behavior.
+
+This is a code extraction task, not a rewrite.
+
+🔹 Rules (important)
+
+Do NOT modify demo UI or behavior
+
+Demo routes must continue to work unchanged
+
+SDK must NOT import demo React components
+
+Logic may be copied or moved into shared modules
+
+Shared modules must be pure and side-effect free
+
+🔹 What to extract and reuse
+
+From the demo codebase, identify and reuse:
+
+Session lifecycle logic
+
+Cost calculation logic
+
+x402 negotiation logic (402 → retry → settle)
+
+API request helpers
+
+Shared types and schemas
+
+Extract these into:
+
+packages/streamflow-shared/
+  session.ts
+  pricing.ts
+  x402.ts
+  types.ts
+
+
+These files may be copied from demo code with minimal changes.
+
+🔹 StreamFlow SDK
+
+Create a new package:
+
+packages/streamflow-sdk/
+
+
+The SDK should:
+
+Import logic from streamflow-shared
+
+Expose a clean public API:
+
+const sf = new StreamFlowClient({
+  apiBaseUrl,
+  creatorAddress,
+  ratePerSecond,
+});
+
+await sf.startSession({ viewerAddress });
+
+sf.onCostUpdate((cost) => {
+  // platform-defined UI logic
+});
+
+const receipt = await sf.stopAndSettle();
+
+
+Handle HTTP 402 responses automatically
+
+Track time and cost internally
+
+Be framework-agnostic TypeScript
+
+🔹 StreamFlow Core API
+
+Create versioned API routes:
+
+/v1/sessions/start
+/v1/sessions/:id/settle
+
+
+These routes may reuse the same internal functions used by the demo backend, but must be exposed separately and documented as platform APIs.
+
+🔹 Demo status
+
+Demo continues to work as-is
+
+Demo remains the reference implementation
+
+No imports from SDK into demo (for now)
+
+🔹 Deliverables
+
+Shared logic extracted into packages/streamflow-shared
+
+SDK built on top of shared logic
+
+Core API routes documented
+
+No regression in demo functionality
+
+End goal
+
+StreamFlow becomes a reusable monetization primitive, not just a demo app.
+
+Proceed carefully and incrementally.

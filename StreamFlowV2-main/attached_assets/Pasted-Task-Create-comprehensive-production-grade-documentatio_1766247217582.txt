@@ -1,0 +1,191 @@
+Task:
+Create comprehensive, production-grade documentation for the StreamFlow SDK and API, based on the existing codebase.
+
+Critical constraints:
+
+DO NOT modify or refactor any existing demo code.
+
+DO NOT change behavior of /api/session/* demo routes.
+
+Documentation only — no code changes unless explicitly required to clarify types or comments.
+
+Context:
+StreamFlow is a real-time, pay-per-use streaming payment infrastructure using HTTP 402 (x402 pattern) and the Movement blockchain. The demo app shows the flow, but the SDK and /v1/* API are the actual product.
+
+Audience:
+
+Web3 app developers
+
+Streaming platforms
+
+Creator platforms
+
+AI agents and pay-per-use services
+
+They are integrating StreamFlow into their own apps.
+
+Documentation Requirements
+
+Generate documentation with the following structure:
+
+1. Overview
+
+Explain clearly:
+
+What StreamFlow is (real-time payment infrastructure, not a streaming platform)
+
+What problems it solves
+
+Why HTTP 402 (x402) is used
+
+How payments flow directly from viewer → creator
+
+2. Core Concepts
+
+Explain:
+
+Sessions (start → active → stopped → settled)
+
+Rate per second pricing
+
+Payment accumulation model
+
+Settlement via HTTP 402
+
+Demo mode vs production mode (explicitly)
+
+3. Architecture Overview
+
+Include:
+
+Demo App vs SDK vs Core API separation
+
+Why the SDK does not sign transactions
+
+How wallet signing is delegated to integrators
+
+High-level flow diagram (ASCII or markdown)
+
+4. SDK Installation
+
+Document:
+
+Installing @streamflow/sdk and @streamflow/shared
+
+Environment requirements
+
+Network assumptions (Movement testnet)
+
+5. SDK Usage Guide
+
+Step-by-step:
+
+Initialize StreamFlowClient
+
+Start a session
+
+Track usage client-side
+
+Stop a session
+
+Handle HTTP 402 PaymentRequiredError
+
+Sign and submit payment with a wallet
+
+Retry settlement with X-PAYMENT header
+
+Use pseudo-code or example snippets, but do not re-implement logic.
+
+6. HTTP API Reference (/v1)
+
+Document endpoints:
+
+POST /v1/sessions/start
+
+POST /v1/sessions/:id/stop
+
+POST /v1/sessions/:id/settle
+
+Expected request/response bodies
+
+402 PaymentRequirements schema
+
+7. Payment Flow (x402)
+
+Explain:
+
+Why HTTP 402 is returned
+
+What PaymentRequirements contain
+
+How clients should react
+
+How settlement is verified on-chain
+
+8. Demo vs Production Modes
+
+Clearly document:
+
+What is simulated in demo mode
+
+What becomes real in production mode
+
+Required environment variables
+
+What happens if demo mode is disabled without wallets
+
+9. Security & Trust Model
+
+Explain:
+
+Direct viewer → creator payments
+
+No custodial funds
+
+Server verification role
+
+Why amount/recipient verification matters (mention as future hardening)
+
+10. Who Should Use This SDK
+
+Explicitly state:
+
+This is for platforms and developers, not end users
+
+Example use cases:
+
+Live streaming
+
+Study sessions
+
+AI agent billing
+
+Creator content
+
+Metered APIs
+
+11. FAQ / Common Integration Mistakes
+
+Examples:
+
+“Why doesn’t the SDK sign transactions?”
+
+“Why am I getting HTTP 402?”
+
+“Can I use my own pricing logic?”
+
+“Can this work without crypto UI?”
+
+Output Requirements
+
+Produce the documentation as:
+
+docs/README.md (main entry)
+
+Optional sub-sections in markdown
+
+Use clear, professional language
+
+Treat this as payment infrastructure documentation, not a tutorial blog
+
+Assume the reader is a competent developer

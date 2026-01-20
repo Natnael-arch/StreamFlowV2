@@ -1,0 +1,55 @@
+[x402] Received PaymentRequirements: {scheme: 'exact', network: 'movement-testnet', maxAmountRequired: '84800000', resource: 'http://ee911da7-b039-4c01-bb0d-873cc0985eee-00-2tc…/x402_4960f19e-7b3a-4d05-a466-cbac4a567b6b/settle', description: 'StreamFlow payment for 848s of streaming', …}
+use-x402.ts:183 [x402] Production mode - signing payment with wallet
+use-x402.ts:52 [x402] Creating payment transaction: {amount: '84800000', payTo: '0x4B9337bc721FFE1735eD9b1F5e9bAeD0C090643f', asset: '0x1::aptos_coin::AptosCoin', sender: '0xea563f61047c73ecb0160d9d9eefb7a38e35edbfdaf3953f0dbe1cdee9982cff'}
+use-x402.ts:74 [x402] Fetching unsigned transaction from server...
+injected.js:1  POST https://ee911da7-b039-4c01-bb0d-873cc0985eee-00-2tcmfb1bzg8k9.worf.replit.dev/api/session/x402_4960f19e-7b3a-4d05-a466-cbac4a567b6b/prepare-transaction 500 (Internal Server Error)
+value @ injected.js:1
+signFn @ use-x402.ts:77
+signExact @ x402plus.js?v=7fadaa4c:2946
+(anonymous) @ use-x402.ts:133
+(anonymous) @ use-x402.ts:187
+await in (anonymous)
+handleStopAndSettle @ stream-view.tsx:99
+handleToggleStream @ stream-view.tsx:157
+callCallback2 @ chunk-SM3OW2QE.js?v=7fadaa4c:3674
+invokeGuardedCallbackDev @ chunk-SM3OW2QE.js?v=7fadaa4c:3699
+invokeGuardedCallback @ chunk-SM3OW2QE.js?v=7fadaa4c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-SM3OW2QE.js?v=7fadaa4c:3736
+executeDispatch @ chunk-SM3OW2QE.js?v=7fadaa4c:7014
+processDispatchQueueItemsInOrder @ chunk-SM3OW2QE.js?v=7fadaa4c:7034
+processDispatchQueue @ chunk-SM3OW2QE.js?v=7fadaa4c:7043
+dispatchEventsForPlugins @ chunk-SM3OW2QE.js?v=7fadaa4c:7051
+(anonymous) @ chunk-SM3OW2QE.js?v=7fadaa4c:7174
+batchedUpdates$1 @ chunk-SM3OW2QE.js?v=7fadaa4c:18913
+batchedUpdates @ chunk-SM3OW2QE.js?v=7fadaa4c:3579
+dispatchEventForPluginEventSystem @ chunk-SM3OW2QE.js?v=7fadaa4c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-SM3OW2QE.js?v=7fadaa4c:5478
+dispatchEvent @ chunk-SM3OW2QE.js?v=7fadaa4c:5472
+dispatchDiscreteEvent @ chunk-SM3OW2QE.js?v=7fadaa4c:5449Understand this error
+use-x402.ts:148 [x402] Payment signing failed: Error: Failed to build transaction
+    at signFn (use-x402.ts:85:17)
+    at async Object.signExact (x402plus.js?v=7fadaa4c:2946:23)
+    at async use-x402.ts:133:29
+    at async Object.settleSession (use-x402.ts:187:25)
+    at async handleStopAndSettle (stream-view.tsx:99:22)
+(anonymous) @ use-x402.ts:148
+await in (anonymous)
+(anonymous) @ use-x402.ts:187
+await in (anonymous)
+handleStopAndSettle @ stream-view.tsx:99
+handleToggleStream @ stream-view.tsx:157
+callCallback2 @ chunk-SM3OW2QE.js?v=7fadaa4c:3674
+invokeGuardedCallbackDev @ chunk-SM3OW2QE.js?v=7fadaa4c:3699
+invokeGuardedCallback @ chunk-SM3OW2QE.js?v=7fadaa4c:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-SM3OW2QE.js?v=7fadaa4c:3736
+executeDispatch @ chunk-SM3OW2QE.js?v=7fadaa4c:7014
+processDispatchQueueItemsInOrder @ chunk-SM3OW2QE.js?v=7fadaa4c:7034
+processDispatchQueue @ chunk-SM3OW2QE.js?v=7fadaa4c:7043
+dispatchEventsForPlugins @ chunk-SM3OW2QE.js?v=7fadaa4c:7051
+(anonymous) @ chunk-SM3OW2QE.js?v=7fadaa4c:7174
+batchedUpdates$1 @ chunk-SM3OW2QE.js?v=7fadaa4c:18913
+batchedUpdates @ chunk-SM3OW2QE.js?v=7fadaa4c:3579
+dispatchEventForPluginEventSystem @ chunk-SM3OW2QE.js?v=7fadaa4c:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-SM3OW2QE.js?v=7fadaa4c:5478
+dispatchEvent @ chunk-SM3OW2QE.js?v=7fadaa4c:5472
+dispatchDiscreteEvent @ chunk-SM3OW2QE.js?v=7fadaa4c:5449Understand this error
