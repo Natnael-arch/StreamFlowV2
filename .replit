@@ -7,9 +7,9 @@ packages = ["unzip"]
 expertMode = true
 
 [deployment]
-run = ["bash", "-c", "cd StreamFlowV2-main && npm run start"]
+run = ["npm", "run", "start"]
 deploymentTarget = "autoscale"
-build = ["bash", "-c", "cd StreamFlowV2-main && npm install && npm run build"]
+build = ["npm", "run", "build"]
 
 [workflows]
 runButton = "Project"
@@ -27,13 +27,13 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd StreamFlowV2-main && npm install && npm run dev"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
