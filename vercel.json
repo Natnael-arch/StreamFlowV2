@@ -1,0 +1,30 @@
+{
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/index.ts"
+        },
+        {
+            "source": "/v1/(.*)",
+            "destination": "/api/index.ts"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ],
+    "builds": [
+        {
+            "src": "api/index.ts",
+            "use": "@vercel/node"
+        },
+        {
+            "src": "package.json",
+            "use": "@vercel/static-build",
+            "config": {
+                "distDir": "dist/public"
+            }
+        }
+    ]
+}
