@@ -17,6 +17,20 @@ import type {
 } from "../../streamflow-shared/src/types";
 import { calculateCost } from "../../streamflow-shared/src/pricing";
 import { is402Response } from "../../streamflow-shared/src/x402";
+import { normalizeAddress } from "../../streamflow-shared/src/session";
+import {
+  Aptos,
+  AptosConfig,
+  Network,
+  Deserializer,
+  RawTransaction,
+  TransactionAuthenticator,
+  SignedTransaction,
+  Serializer
+} from "@aptos-labs/ts-sdk";
+
+const BARDOCK_CONTRACT_ADDRESS = "0x00bc9b0ecb6722865cd483e18184957d8043bf6283c56aa9b8a2c1b433d6b31d";
+const MOVEMENT_RPC_URL = "https://testnet.movementnetwork.xyz/v1";
 
 export interface TransportAdapter {
   fetch(url: string, options?: RequestInit): Promise<Response>;
@@ -40,7 +54,7 @@ export class StreamFlowClient {
   private config: StreamFlowConfig;
   private transport: TransportAdapter;
   private wallet?: WalletAdapter;
-  
+
   private currentSession: Session | null = null;
   private costUpdateInterval: ReturnType<typeof setInterval> | null = null;
   private costUpdateCallbacks: CostUpdateCallback[] = [];
@@ -53,11 +67,11 @@ export class StreamFlowClient {
       network: options.network || "movement-testnet",
       asset: options.asset || "MOVE",
     };
-    
+
     this.transport = options.transport || {
       fetch: (url, opts) => fetch(url, opts),
     };
-    
+
     this.wallet = options.wallet;
   }
 
@@ -162,7 +176,7 @@ export class StreamFlowClient {
     }
 
     const result = await response.json() as SettleSessionResult;
-    
+
     if (result.success && result.txHash) {
       this.currentSession = {
         ...this.currentSession,
@@ -179,7 +193,7 @@ export class StreamFlowClient {
       throw new Error("No session to prepare transaction for");
     }
 
-    const viewerAddress = this.wallet 
+    const viewerAddress = this.wallet
       ? await this.wallet.getAddress()
       : this.currentSession.viewerAddress;
 
@@ -202,7 +216,7 @@ export class StreamFlowClient {
 
   async stopAndSettle(): Promise<SettleSessionResult> {
     await this.stopSession();
-    
+
     try {
       return await this.settle();
     } catch (error) {
@@ -215,7 +229,7 @@ export class StreamFlowClient {
 
   onCostUpdate(callback: CostUpdateCallback): () => void {
     this.costUpdateCallbacks.push(callback);
-    
+
     return () => {
       const index = this.costUpdateCallbacks.indexOf(callback);
       if (index > -1) {
@@ -275,5 +289,142 @@ export class PaymentRequiredError extends Error {
     super("Payment required (HTTP 402)");
     this.name = "PaymentRequiredError";
     this.requirements = requirements;
+  }
+}
+
+/**
+ * MovementClient
+ * 
+ * Specialized client for Movement Bardock Testnet interaction.
+ */
+export class MovementClient {
+  private aptos: Aptos;
+
+  constructor() {
+    const config = new AptosConfig({
+      network: Network.CUSTOM,
+      fullnode: MOVEMENT_RPC_URL,
+    });
+    this.aptos = new Aptos(config);
+  }
+
+  /**
+   * Generates the payload for a settle_payment transaction.
+   */
+  getSettlementPayload(recipient: string, amount: bigint | string, sessionId: string | number): any {
+    return {
+      data: {
+        function: `${BARDOCK_CONTRACT_ADDRESS}::settlement::settle_payment`,
+        typeArguments: ["0x1::aptos_coin::AptosCoin"],
+        functionArguments: [recipient, amount.toString(), sessionId.toString()],
+      },
+    };
+  }
+
+  /**
+   * Builds an unsigned settlement transaction for a viewer to sign.
+   */
+  async buildUnsignedTransaction(
+    sender: string,
+    recipient: string,
+    amount: bigint | string,
+    sessionId: string | number
+  ): Promise<{ unsignedTransactionBcsBase64: string; payTo: string; amount: string }> {
+    const transaction = await this.aptos.transaction.build.simple({
+      sender: normalizeAddress(sender),
+      data: {
+        function: `${normalizeAddress(BARDOCK_CONTRACT_ADDRESS)}::settlement::settle_payment`,
+        typeArguments: ["0x1::aptos_coin::AptosCoin"],
+        functionArguments: [normalizeAddress(recipient), amount.toString(), sessionId.toString()],
+      },
+    });
+
+    const rawTxBytes = transaction.rawTransaction.bcsToBytes();
+    const base64 = Buffer.from(rawTxBytes).toString('base64');
+
+    return {
+      unsignedTransactionBcsBase64: base64,
+      payTo: normalizeAddress(recipient),
+      amount: amount.toString(),
+    };
+  }
+
+  /**
+   * Submits a signed transaction to Movement testnet.
+   */
+  async submitSignedTransaction(
+    rawTxBytes: Uint8Array,
+    signatureBytes: Uint8Array
+  ): Promise<{ success: boolean; txHash: string }> {
+    try {
+      // Deserialize segments
+      const rawTxDeserializer = new Deserializer(rawTxBytes);
+      const rawTransaction = (RawTransaction as any).deserialize(rawTxDeserializer);
+
+      const sigDeserializer = new Deserializer(signatureBytes);
+      const txAuthenticator = (TransactionAuthenticator as any).deserialize(sigDeserializer);
+
+      // Create signed transaction
+      const signedTransaction = new (SignedTransaction as any)(rawTransaction, txAuthenticator);
+
+      // Serialize
+      const serializer = new Serializer();
+      signedTransaction.serialize(serializer);
+      const signedTxBytes = serializer.toUint8Array();
+
+      // Submit
+      const pendingTx = await (this.aptos.transaction.submit as any).simple({
+        signature: txAuthenticator,
+        transaction: rawTransaction,
+      });
+
+      // Wait for confirmation
+      const confirmedTx = await this.aptos.waitForTransaction({
+        transactionHash: pendingTx.hash,
+        options: { timeoutSecs: 30 }
+      });
+
+      return {
+        success: true,
+        txHash: confirmedTx.hash,
+      };
+    } catch (error) {
+      console.error("[MovementClient] Transaction submission failed:", error);
+      return { success: false, txHash: "" };
+    }
+  }
+
+  /**
+   * Verifies a settlement payment on-chain.
+   */
+  async verifyPayment(
+    txHash: string,
+    expectedSessionId: string | number,
+    expectedAmount: bigint | string
+  ): Promise<boolean> {
+    try {
+      const tx = await this.aptos.getTransactionByHash({ transactionHash: txHash }) as any;
+
+      if (!tx || !tx.success || !tx.events) {
+        return false;
+      }
+
+      const eventType = `${normalizeAddress(BARDOCK_CONTRACT_ADDRESS)}::settlement::SettlementEvent`;
+      const settlementEvent = tx.events.find((e: any) => e.type === eventType);
+
+      if (!settlementEvent) {
+        return false;
+      }
+
+      const { session_id, amount } = settlementEvent.data;
+
+      const sessionIdMatch = session_id.toString() === expectedSessionId.toString();
+      const amountMatch = BigInt(amount) >= BigInt(expectedAmount);
+
+      return sessionIdMatch && amountMatch;
+    } catch (error) {
+      console.error("[MovementClient] Payment verification failed:", error);
+      return false;
+    }
   }
 }

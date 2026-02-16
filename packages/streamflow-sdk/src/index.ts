@@ -4,7 +4,7 @@
  * Client SDK for StreamFlow pay-per-second streaming payments.
  */
 
-export { StreamFlowClient, PaymentRequiredError } from "./client";
+export { StreamFlowClient, MovementClient, PaymentRequiredError } from "./client";
 export type {
   StreamFlowClientOptions,
   TransportAdapter,

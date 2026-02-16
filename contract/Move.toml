@@ -1,0 +1,10 @@
+[package]
+name = "streamflow_contract"
+version = "1.0.0"
+authors = ["StreamFlow Team"]
+
+[addresses]
+streamflow = "0x00bc9b0ecb6722865cd483e18184957d8043bf6283c56aa9b8a2c1b433d6b31d"
+
+[dependencies]
+AptosFramework = { git = "https://github.com/movementlabsxyz/aptos-core.git", rev = "movement", subdir = "aptos-move/framework/aptos-framework" }

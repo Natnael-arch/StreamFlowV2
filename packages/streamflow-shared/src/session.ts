@@ -83,3 +83,13 @@ export function isSessionSettled(session: Session): boolean {
 export function canSettle(session: Session): boolean {
   return session.status === "stopped" && !session.txHash;
 }
+
+/**
+ * Normalize an address to 64 hex characters (Aptos/Movement format)
+ */
+export function normalizeAddress(addr: string): string {
+  if (!addr) return addr;
+  const clean = addr.startsWith('0x') ? addr.slice(2) : addr;
+  const padded = clean.padStart(64, '0');
+  return `0x${padded}`;
+}
