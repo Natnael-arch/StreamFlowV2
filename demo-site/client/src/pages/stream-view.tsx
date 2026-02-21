@@ -10,10 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/hooks/use-wallet";
 import { useX402 } from "@/hooks/use-x402";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  Play, 
-  Pause, 
-  Users, 
+import {
+  Play,
+  Pause,
+  Users,
   Wallet,
   LayoutDashboard,
   Zap,
@@ -43,7 +43,7 @@ export default function StreamView() {
   const [totalCost, setTotalCost] = useState(0);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
   const [isSettling, setIsSettling] = useState(false);
-  
+
   const ratePerSecond = 0.001;
   const viewerAddress = wallet.address || "0x0000000000000000000000000000000000000000";
   const creatorAddress = "0xea563f61047c73ecb0160d9d9eefb7a38e35edbfdaf3953f0dbe1cdee9982cff";
@@ -58,7 +58,7 @@ export default function StreamView() {
       }
     }
   }, [isWatching]);
-  
+
   const { data: statsData } = useQuery<{ stats: StreamStats }>({
     queryKey: ['/api/stats'],
     refetchInterval: 5000,
@@ -76,10 +76,20 @@ export default function StreamView() {
         }),
         credentials: 'include',
       });
+
+      // Handle non-JSON error responses (like HTML error pages)
+      if (!response.ok && !response.headers.get("content-type")?.includes("application/json")) {
+        const text = await response.text();
+        console.error("[API] Server returned non-JSON error:", text.slice(0, 100));
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+
       const data = await response.json();
+
       if (response.status === 409 && data.sessionId) {
         return { sessionId: data.sessionId, message: "Resumed existing session" };
       }
+
       if (!response.ok) {
         throw new Error(data.error || "Failed to start session");
       }
@@ -107,20 +117,20 @@ export default function StreamView() {
 
   const handleStopAndSettle = async () => {
     if (!sessionId) return;
-    
+
     // Stop timer immediately when user clicks
     setIsWatching(false);
     setIsSettling(true);
-    
+
     try {
       const result = await x402.settleSession(sessionId);
       setLastTxHash(result.txHash);
-      
+
       toast({
         title: "Payment Settled",
         description: `Paid $${result.settledAmount.toFixed(4)} to creator via x402`,
       });
-      
+
       queryClient.invalidateQueries({ queryKey: ['/api/sessions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
     } catch (error) {
@@ -184,7 +194,7 @@ export default function StreamView() {
             <Zap className="h-6 w-6 text-primary" />
             <span className="font-heading text-xl font-bold">StreamFlow</span>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
               <Button variant="ghost" size="sm" data-testid="link-dashboard">
@@ -192,11 +202,11 @@ export default function StreamView() {
                 Creator Dashboard
               </Button>
             </Link>
-            
+
             {wallet.connected ? (
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 data-testid="button-wallet-connected"
                 onClick={async () => {
                   if (wallet.address) {
@@ -233,7 +243,7 @@ export default function StreamView() {
                 poster=""
                 data-testid="video-stream"
               />
-              
+
               {/* Overlay when not watching */}
               {!isWatching && (
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
@@ -245,7 +255,7 @@ export default function StreamView() {
                   </div>
                 </div>
               )}
-              
+
               <div className="absolute top-4 left-4 flex items-center gap-2">
                 {isWatching ? (
                   <Badge className="bg-live text-live-foreground animate-pulse-glow" data-testid="badge-live">
@@ -259,14 +269,14 @@ export default function StreamView() {
                   </Badge>
                 )}
               </div>
-              
+
               <div className="absolute top-4 right-4">
                 <Badge variant="secondary" className="gap-1.5">
                   <Users className="h-3 w-3" />
                   <span data-testid="text-viewer-count">{statsData?.stats?.activeViewers || 0}</span>
                 </Badge>
               </div>
-              
+
               <div className="absolute bottom-4 left-4 flex items-center gap-3">
                 <Avatar className="h-10 w-10 border-2 border-primary">
                   <AvatarImage src="" />
@@ -278,7 +288,7 @@ export default function StreamView() {
                 </div>
               </div>
             </div>
-            
+
             <Card>
               <CardContent className="p-4">
                 <h2 className="font-heading text-xl font-bold mb-2">Ultimate Web3 Gaming Stream</h2>
@@ -287,7 +297,7 @@ export default function StreamView() {
                 </p>
               </CardContent>
             </Card>
-            
+
             <div className="space-y-3">
               <h3 className="font-heading font-semibold">Related Streams</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -312,7 +322,7 @@ export default function StreamView() {
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <Card className="border-primary/50">
               <CardContent className="p-4 space-y-4">
@@ -322,9 +332,9 @@ export default function StreamView() {
                     x402
                   </Badge>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-muted-foreground">Rate</span>
@@ -332,21 +342,21 @@ export default function StreamView() {
                       ${ratePerSecond.toFixed(4)}/sec
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-muted-foreground">Total Cost</span>
                     <span className="font-mono text-2xl font-bold tabular-nums text-primary" data-testid="text-total-cost">
                       ${totalCost.toFixed(4)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-muted-foreground">Time Watched</span>
                     <span className="font-mono text-sm tabular-nums" data-testid="text-time-watched">
                       {formatTime(elapsedTime)}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm text-muted-foreground">Status</span>
                     <Badge variant={isWatching ? "default" : "secondary"} className={isWatching ? "bg-live" : ""}>
@@ -354,9 +364,9 @@ export default function StreamView() {
                     </Badge>
                   </div>
                 </div>
-                
+
                 <Separator />
-                
+
                 <Button
                   className="w-full"
                   size="lg"
@@ -381,7 +391,7 @@ export default function StreamView() {
                     </>
                   )}
                 </Button>
-                
+
                 {lastTxHash && !isWatching && (
                   <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                     <span>Last tx:</span>
@@ -393,7 +403,7 @@ export default function StreamView() {
                     )}
                   </div>
                 )}
-                
+
                 {!wallet.connected && (
                   <p className="text-xs text-center text-muted-foreground">
                     Connect your wallet to start watching
@@ -401,7 +411,7 @@ export default function StreamView() {
                 )}
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4 space-y-3">
                 <h3 className="font-heading font-semibold">Stream Stats</h3>
@@ -433,7 +443,7 @@ export default function StreamView() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4 space-y-3">
                 <h3 className="font-heading font-semibold flex items-center gap-2">
@@ -441,12 +451,12 @@ export default function StreamView() {
                   About x402
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  x402 enables real-time micropayments on Movement blockchain. 
+                  x402 enables real-time micropayments on Movement blockchain.
                   Pay only for what you watch, by the second.
                 </p>
               </CardContent>
             </Card>
-            
+
             {wallet.connected && x402.isProductionMode && (
               <Card className="border-amber-500/50 bg-amber-500/5">
                 <CardContent className="p-4 space-y-3">
@@ -464,9 +474,9 @@ export default function StreamView() {
                     </ol>
                     <p className="text-xs pt-2">
                       Get testnet tokens from{" "}
-                      <a 
-                        href="https://faucet.testnet.movementnetwork.xyz/" 
-                        target="_blank" 
+                      <a
+                        href="https://faucet.testnet.movementnetwork.xyz/"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary underline hover:no-underline inline-flex items-center gap-1"
                         data-testid="link-movement-faucet"

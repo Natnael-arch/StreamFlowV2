@@ -9,8 +9,7 @@
 
 import { randomUUID } from "crypto";
 import { Aptos, AptosConfig, Network, TransactionAuthenticator, Deserializer, RawTransaction, SignedTransaction, Serializer } from "@aptos-labs/ts-sdk";
-import { MovementClient } from "streamflow-sdk";
-import { normalizeAddress } from "@streamflow/shared";
+import { MovementClient, normalizeAddress } from "streamflow-sdk";
 
 import type { X402OpenSessionResult, X402SettleSessionResult, PaymentRequirements } from "@shared/schema";
 
@@ -18,7 +17,7 @@ const MOVEMENT_NETWORK = process.env.MOVEMENT_NETWORK || "movement-testnet";
 const MOVEMENT_ASSET = process.env.MOVEMENT_ASSET || "0x1::aptos_coin::AptosCoin";
 const MOVEMENT_PAY_TO = process.env.MOVEMENT_PAY_TO || "";
 const MOVEMENT_RPC_URL = process.env.MOVEMENT_RPC_URL || "https://testnet.movementnetwork.xyz/v1";
-const MOVEMENT_CONTRACT_ADDRESS = process.env.MOVEMENT_CONTRACT_ADDRESS || "0xa563f61047c73ecb0160d9d9eefb7a38e35edbfdaf3953f0dbe1cdee9982cff";
+const MOVEMENT_CONTRACT_ADDRESS = process.env.MOVEMENT_CONTRACT_ADDRESS || "0x00bc9b0ecb6722865cd483e18184957d8043bf6283c56aa9b8a2c1b433d6b31d";
 const MOVEMENT_FACILITATOR_URL = process.env.MOVEMENT_FACILITATOR_URL || "https://facilitator.stableyard.fi";
 const PLATFORM_PRIVATE_KEY = process.env.PLATFORM_PRIVATE_KEY;
 const ACCEPT_DEMO_PAYMENTS = process.env.X402_ACCEPT_DEMO_PAYMENTS === 'true';

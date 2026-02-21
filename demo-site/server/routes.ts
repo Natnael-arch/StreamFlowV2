@@ -28,7 +28,7 @@ export async function registerRoutes(
    * Opens a new streaming payment session.
    */
   app.post("/api/session/start", async (req, res) => {
-    // Start session request received
+    console.info(`[API] Start session request: ${req.body?.viewerAddress} -> ${req.body?.creatorAddress}`);
 
     try {
       const parseResult = startSessionSchema.safeParse(req.body);
