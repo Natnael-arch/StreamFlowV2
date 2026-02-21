@@ -12,30 +12,28 @@ import { Aptos, AptosConfig, Network, TransactionAuthenticator, Deserializer, Ra
 import { MovementClient } from "streamflow-sdk";
 import { normalizeAddress } from "@streamflow/shared";
 
-const movementClient = new MovementClient();
 import type { X402OpenSessionResult, X402SettleSessionResult, PaymentRequirements } from "@shared/schema";
 
 const MOVEMENT_NETWORK = process.env.MOVEMENT_NETWORK || "movement-testnet";
 const MOVEMENT_ASSET = process.env.MOVEMENT_ASSET || "0x1::aptos_coin::AptosCoin";
 const MOVEMENT_PAY_TO = process.env.MOVEMENT_PAY_TO || "";
 const MOVEMENT_RPC_URL = process.env.MOVEMENT_RPC_URL || "https://testnet.movementnetwork.xyz/v1";
+const MOVEMENT_CONTRACT_ADDRESS = process.env.MOVEMENT_CONTRACT_ADDRESS || "0xa563f61047c73ecb0160d9d9eefb7a38e35edbfdaf3953f0dbe1cdee9982cff";
 const MOVEMENT_FACILITATOR_URL = process.env.MOVEMENT_FACILITATOR_URL || "https://facilitator.stableyard.fi";
 const PLATFORM_PRIVATE_KEY = process.env.PLATFORM_PRIVATE_KEY;
 const ACCEPT_DEMO_PAYMENTS = process.env.X402_ACCEPT_DEMO_PAYMENTS === 'true';
+
+const movementClient = new MovementClient(MOVEMENT_RPC_URL, MOVEMENT_CONTRACT_ADDRESS);
 
 const isProductionMode = !!MOVEMENT_PAY_TO && !!PLATFORM_PRIVATE_KEY && !ACCEPT_DEMO_PAYMENTS;
 
 // Initialize Aptos client for Movement testnet
 // (moved to settlement.ts)
 
-if (!isProductionMode) {
-  console.log("[x402] Running in DEMO MODE - no real blockchain transactions");
-  console.log("[x402] Set MOVEMENT_PAY_TO and PLATFORM_PRIVATE_KEY for production mode");
+if (isProductionMode) {
+  console.info(`[x402] Running in PRODUCTION MODE on ${MOVEMENT_NETWORK}`);
 } else {
-  console.log("[x402] Running in PRODUCTION MODE with Movement blockchain");
-  console.log(`[x402] Network: ${MOVEMENT_NETWORK}`);
-  console.log(`[x402] RPC URL: ${MOVEMENT_RPC_URL}`);
-  console.log(`[x402] Pay To: ${MOVEMENT_PAY_TO?.slice(0, 10)}...`);
+  console.warn("[x402] Running in DEMO MODE - no real blockchain transactions");
 }
 
 // (moved to settlement.ts)
@@ -79,16 +77,8 @@ export async function openX402Session(
 ): Promise<X402OpenSessionResult> {
   const sessionId = `x402_${randomUUID()}`;
 
-  console.log(`[x402] Opening payment session:`);
-  console.log(`  - Session ID: ${sessionId}`);
-  console.log(`  - Viewer: ${viewerAddress}`);
-  console.log(`  - Creator: ${creatorAddress}`);
-  console.log(`  - Rate: ${ratePerSecond} MOVE/second`);
-  console.log(`  - Mode: ${isProductionMode ? 'PRODUCTION' : 'DEMO'}`);
-
-  await new Promise(resolve => setTimeout(resolve, 100));
-
-  console.log(`[x402] Session opened successfully`);
+  // Placeholder for any async initialization if needed
+  await new Promise(resolve => setTimeout(resolve, 50));
 
   return {
     sessionId,
@@ -116,27 +106,15 @@ export async function settleX402Session(
   sessionId: string,
   totalAmount: number
 ): Promise<X402SettleSessionResult> {
-  console.log(`[x402] Settling payment session:`);
-  console.log(`  - Session ID: ${sessionId}`);
-  console.log(`  - Total Amount: ${totalAmount} MOVE`);
-  console.log(`  - Mode: ${isProductionMode ? 'PRODUCTION' : 'DEMO'}`);
-
-  await new Promise(resolve => setTimeout(resolve, 150));
+  await new Promise(resolve => setTimeout(resolve, 50));
 
   let txHash: string;
 
   if (isProductionMode) {
     txHash = `0x${randomUUID().replace(/-/g, '')}${randomUUID().replace(/-/g, '').slice(0, 32)}`;
-    console.log(`[x402] Production mode - Settlement would be handled by facilitator`);
-    console.log(`[x402] Facilitator URL: ${MOVEMENT_FACILITATOR_URL}`);
   } else {
     txHash = `demo_${randomUUID().replace(/-/g, '')}`;
-    console.log(`[x402] Demo settlement (no real transaction)`);
   }
-
-  console.log(`[x402] Settlement complete:`);
-  console.log(`  - Transaction Hash: ${txHash}`);
-  console.log(`  - Settled Amount: ${totalAmount} MOVE`);
 
   return {
     success: true,
@@ -267,19 +245,11 @@ export async function verifyPaymentHeader(
   // Use provided recipient address or fall back to platform address
   const expectedRecipient = recipientAddress || MOVEMENT_PAY_TO;
 
-  console.log(`[x402] Verifying payment header for session: ${sessionId}`);
-  console.log(`  - Expected amount: ${expectedAmount} MOVE (${toOctas(expectedAmount)} octas)`);
-  console.log(`  - Expected recipient: ${expectedRecipient}`);
-  console.log(`  - Mode: ${isProductionMode ? 'PRODUCTION' : 'DEMO'}`);
-  console.log(`  - Header type: ${paymentHeader.startsWith('0x') ? 'TX_HASH' : paymentHeader.startsWith('demo_') ? 'DEMO' : 'ENCODED'}`);
-
   // Demo mode handling
   if (!isProductionMode) {
     if (!paymentHeader.startsWith('demo_')) {
-      console.log(`[x402] Demo mode - invalid demo payment header`);
       return { success: false, txHash: '' };
     }
-    console.log(`[x402] Demo mode - accepting demo payment header`);
     return {
       success: true,
       txHash: paymentHeader,

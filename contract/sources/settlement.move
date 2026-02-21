@@ -11,8 +11,11 @@ module streamflow::settlement {
     /// The sender does not have enough balance to complete the settlement.
     const E_INSUFFICIENT_BALANCE: u64 = 1;
 
-    /// A settlement record for this session already exists.
-    const E_ALREADY_SETTLED: u64 = 2;
+    /// The recipient address cannot be the same as the sender address.
+    const E_INVALID_RECIPIENT: u64 = 2;
+
+    /// The settlement amount must be greater than zero.
+    const E_INVALID_AMOUNT: u64 = 3;
 
     // --- Data Structures ---
 
@@ -49,9 +52,11 @@ module streamflow::settlement {
     /// multiple settlements simultaneously.
     /// 
     /// @param sender - The account signing and paying for the session.
-    /// @param recipient - The address receiving the payment.
-    /// @param amount - The settlement amount in octas.
+    /// @param recipient - The address receiving the payment (the content creator).
+    /// @param amount - The settlement amount in octas (e.g., 100,000,000 for 1 MOVE).
     /// @param session_id - Unique session ID from the off-chain database.
+    /// 
+    /// Emits a `SettlementEvent` containing session details and timestamp.
     public entry fun settle_payment<CoinType>(
         sender: &signer,
         recipient: address,
@@ -60,18 +65,15 @@ module streamflow::settlement {
     ) {
         let sender_addr = signer::address_of(sender);
         
-        // 1. Safety Check: Verify balance
+        // 1. Safety Checks
+        assert!(sender_addr != recipient, E_INVALID_RECIPIENT);
+        assert!(amount > 0, E_INVALID_AMOUNT);
         assert!(coin::balance<CoinType>(sender_addr) >= amount, E_INSUFFICIENT_BALANCE);
 
         // 2. Transfer: Direct non-custodial payment
         coin::transfer<CoinType>(sender, recipient, amount);
 
-        // 3. Receipt: Store on-chain record for direct UI querying.
-        // In a production environment, we could use a resource account or a seed-based
-        // address to store these records to avoid cluttering the user space, 
-        // but for high throughput, storing under a session-derived address or 
-        // simply emitting and storing in a user's 'Vault' is efficient.
-        // Here we emit and store for verification.
+        // 3. Emit Event for Verification
         let now = timestamp::now_seconds();
         
         event::emit(SettlementEvent {
@@ -81,10 +83,6 @@ module streamflow::settlement {
             amount,
             timestamp: now,
         });
-
-        // Note: For true "Parallelism per session", we would ideally avoid 
-        // moving everything to a single account if they share a lot of state.
-        // Since each session_id is unique, this flow is highly parallelizable.
     }
 
     // --- Formal Verification (Move Spec) ---
@@ -92,15 +90,19 @@ module streamflow::settlement {
     spec settle_payment {
         let sender_addr = signer::address_of(sender);
         
-        // Property 1: Abort if insufficient balance
+        // Property 1: Abort if sender is recipient
+        aborts_if sender_addr == recipient;
+
+        // Property 2: Abort if amount is 0
+        aborts_if amount == 0;
+
+        // Property 3: Abort if insufficient balance
         aborts_if coin::balance<CoinType>(sender_addr) < amount;
         
-        // Property 2: Sender balance decreases by exactly amount
+        // Property 4: Sender balance decreases by exactly amount
         ensures coin::balance<CoinType>(sender_addr) == old(coin::balance<CoinType>(sender_addr)) - amount;
         
-        // Property 3: Recipient balance increases by exactly amount
+        // Property 5: Recipient balance increases by exactly amount
         ensures coin::balance<CoinType>(recipient) == old(coin::balance<CoinType>(recipient)) + amount;
-        
-        // Property 4: Always aborts if amount is 0 (standard coin behavior) or other internal triggers
     }
 }

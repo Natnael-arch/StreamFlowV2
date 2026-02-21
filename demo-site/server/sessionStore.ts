@@ -11,7 +11,7 @@ import { eq, and, desc } from "drizzle-orm";
 
 class SessionStore {
   constructor() {
-    console.log("[SessionStore] Initialized PostgreSQL session storage");
+    // Initialized session storage
   }
 
   /**
@@ -34,7 +34,7 @@ class SessionStore {
       status: "active",
     }).returning();
 
-    console.log(`[SessionStore] Created session: ${sessionId}`);
+    // Created session
 
     return this.mapDbToSession(dbSession);
   }
@@ -96,12 +96,10 @@ class SessionStore {
     const session = await this.getSession(sessionId);
 
     if (!session) {
-      console.log(`[SessionStore] Session not found: ${sessionId}`);
       return null;
     }
 
     if (session.status !== "active") {
-      console.log(`[SessionStore] Session already stopped: ${sessionId}`);
       return session;
     }
 
@@ -119,9 +117,7 @@ class SessionStore {
       .where(eq(sessions.sessionId, sessionId))
       .returning();
 
-    console.log(`[SessionStore] Stopped session: ${sessionId}`);
-    console.log(`  - Duration: ${totalSeconds} seconds`);
-    console.log(`  - Total Paid: ${totalPaid} MOVE`);
+    // Stopped session
 
     return this.mapDbToSession(updated);
   }
@@ -139,12 +135,10 @@ class SessionStore {
       .returning();
 
     if (!updated) {
-      console.log(`[SessionStore] Session not found for settlement: ${sessionId}`);
       return null;
     }
 
-    console.log(`[SessionStore] Settled session: ${sessionId}`);
-    console.log(`  - Transaction Hash: ${txHash}`);
+    console.info(`[SessionStore] Settled session: ${sessionId} (tx: ${txHash})`);
 
     return this.mapDbToSession(updated);
   }

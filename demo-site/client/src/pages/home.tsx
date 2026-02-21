@@ -8,24 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  Play, 
-  Square, 
-  Clock, 
-  Wallet, 
-  Users, 
-  TrendingUp, 
+import {
+  Play,
+  Square,
+  Clock,
+  Wallet,
+  Users,
+  TrendingUp,
   Zap,
   Copy,
   CheckCircle2,
   AlertCircle,
   Radio
 } from "lucide-react";
-import type { 
-  Session, 
-  StartSessionResponse, 
+import type {
+  Session,
+  StartSessionResponse,
   StopSessionResponse,
-  GetAllSessionsResponse 
+  GetAllSessionsResponse
 } from "@shared/schema";
 
 function formatAddress(address: string): string {
@@ -37,7 +37,7 @@ function formatDuration(seconds: number): string {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  
+
   if (hrs > 0) {
     return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
@@ -87,9 +87,9 @@ function CopyButton({ text }: { text: string }) {
   };
 
   return (
-    <Button 
-      size="icon" 
-      variant="ghost" 
+    <Button
+      size="icon"
+      variant="ghost"
       onClick={handleCopy}
       data-testid="button-copy"
     >
@@ -102,12 +102,12 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function RealTimeCostDisplay({ 
-  sessionId, 
+function RealTimeCostDisplay({
+  sessionId,
   ratePerSecond,
   startTime,
-  isActive 
-}: { 
+  isActive
+}: {
   sessionId: string;
   ratePerSecond: number;
   startTime: number;
@@ -143,14 +143,16 @@ function RealTimeCostDisplay({
   );
 }
 
-function SessionCard({ 
-  session, 
+function SessionCard({
+  session,
   onStop,
-  isActive 
-}: { 
-  session: Session; 
+  isActive,
+  onStopIsPending
+}: {
+  session: Session;
   onStop: (sessionId: string) => void;
   isActive: boolean;
+  onStopIsPending?: boolean;
 }) {
   return (
     <Card className={`${isActive ? 'border-emerald-500/50 dark:border-emerald-400/50' : ''}`} data-testid={`card-session-${session.sessionId}`}>
@@ -163,14 +165,19 @@ function SessionCard({
           <CopyButton text={session.sessionId} />
         </div>
         {isActive && (
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             size="sm"
             onClick={() => onStop(session.sessionId)}
+            disabled={onStopIsPending}
             data-testid="button-stop-session"
           >
-            <Square className="w-4 h-4 mr-1" />
-            Stop
+            {onStopIsPending ? (
+              <Clock className="w-4 h-4 mr-1 animate-spin" />
+            ) : (
+              <Square className="w-4 h-4 mr-1" />
+            )}
+            {onStopIsPending ? "Stopping..." : "Stop"}
           </Button>
         )}
       </CardHeader>
@@ -228,7 +235,7 @@ function SessionCard({
         </div>
         {isActive && (
           <div className="mt-4 pt-4 border-t">
-            <RealTimeCostDisplay 
+            <RealTimeCostDisplay
               sessionId={session.sessionId}
               ratePerSecond={session.ratePerSecond}
               startTime={session.startTime}
@@ -257,11 +264,11 @@ function RealTimeDuration({ startTime }: { startTime: number }) {
   return <span>{duration}</span>;
 }
 
-function StatsCards({ 
-  totalSessions, 
-  activeSessions, 
-  totalRevenue 
-}: { 
+function StatsCards({
+  totalSessions,
+  activeSessions,
+  totalRevenue
+}: {
   totalSessions: number;
   activeSessions: number;
   totalRevenue: number;
@@ -310,19 +317,19 @@ export default function Home() {
   const [ratePerSecond, setRatePerSecond] = useState("0.001");
 
   // Fetch all sessions
-  const { 
-    data: sessionsData, 
+  const {
+    data: sessionsData,
     isLoading: sessionsLoading,
-    refetch: refetchSessions 
+    refetch: refetchSessions
   } = useQuery<GetAllSessionsResponse>({
     queryKey: ["/api/sessions"],
     refetchInterval: 5000,
   });
 
   // Fetch stats
-  const { 
+  const {
     data: statsData,
-    refetch: refetchStats 
+    refetch: refetchStats
   } = useQuery<{ totalSessions: number; activeSessions: number; totalRevenue: number }>({
     queryKey: ["/api/stats"],
     refetchInterval: 5000,
@@ -485,8 +492,8 @@ export default function Home() {
                     data-testid="input-rate"
                   />
                 </div>
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   onClick={handleStartSession}
                   disabled={startSessionMutation.isPending}
                   data-testid="button-start-session"
@@ -507,7 +514,7 @@ export default function Home() {
                 {/* Demo Mode Info */}
                 <div className="p-3 rounded-lg bg-muted/50 border border-dashed">
                   <p className="text-xs text-muted-foreground">
-                    <strong>Demo Mode:</strong> x402 payments are simulated. 
+                    <strong>Demo Mode:</strong> x402 payments are simulated.
                     Use any wallet address format for testing.
                   </p>
                 </div>
@@ -526,7 +533,7 @@ export default function Home() {
                   <Badge variant="secondary">{activeSessions.length}</Badge>
                 )}
               </h2>
-              
+
               {sessionsLoading ? (
                 <div className="space-y-4">
                   <Skeleton className="h-48 w-full" />
@@ -550,6 +557,7 @@ export default function Home() {
                       session={session}
                       onStop={handleStopSession}
                       isActive={true}
+                      onStopIsPending={stopSessionMutation.isPending && stopSessionMutation.variables === session.sessionId}
                     />
                   ))}
                 </div>
@@ -565,7 +573,7 @@ export default function Home() {
                   <Badge variant="outline">{completedSessions.length}</Badge>
                 )}
               </h2>
-              
+
               {completedSessions.length === 0 ? (
                 <Card className="border-dashed">
                   <CardContent className="flex flex-col items-center justify-center py-8">
@@ -583,6 +591,7 @@ export default function Home() {
                       session={session}
                       onStop={handleStopSession}
                       isActive={false}
+                      onStopIsPending={stopSessionMutation.isPending && stopSessionMutation.variables === session.sessionId}
                     />
                   ))}
                 </div>

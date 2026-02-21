@@ -37,13 +37,6 @@ export function useX402(): UseX402Return {
     requirements: PaymentRequirements,
     senderAddress: string,
   ): Promise<string> => {
-    console.log('[x402] Submitting payment with wallet adapter:', {
-      amount: requirements.maxAmountRequired,
-      payTo: requirements.payTo,
-      asset: requirements.asset,
-      sender: senderAddress,
-    });
-
     // Use wallet adapter's signAndSubmitTransaction (works with any connected wallet)
     if (!wallet.signAndSubmitTransaction) {
       throw new Error('Wallet not connected or does not support signAndSubmitTransaction. Please reconnect your wallet.');
@@ -62,12 +55,6 @@ export function useX402(): UseX402Return {
         normalizedPayTo = '0x' + hexPart.padStart(64, '0');
       }
 
-      console.log('[x402] Building settlement interaction via SDK:', {
-        to: normalizedPayTo,
-        amount: requirements.maxAmountRequired,
-        sessionId: requirements.resource.split('/').pop(), // Extract session ID from resource URL if needed
-      });
-
       // Build the settlement payload using the SDK's MovementClient
       const sessionId = requirements.resource.split('/').pop() || '';
       const payload = movementClient.getSettlementPayload(
@@ -79,20 +66,15 @@ export function useX402(): UseX402Return {
       // Submit transaction through wallet adapter
       const result = await wallet.signAndSubmitTransaction(payload);
 
-      console.log('[x402] Transaction result:', result);
-
       // Extract transaction hash from result
       const txHash = result?.hash || result?.args?.hash || (typeof result === 'string' ? result : null);
 
       if (!txHash) {
-        console.error('[x402] Could not extract tx hash from result:', result);
         throw new Error('No transaction hash returned from wallet');
       }
 
-      console.log('[x402] Transaction hash:', txHash);
       return txHash;
     } catch (error: any) {
-      console.error('[x402] Wallet transaction failed:', error);
       if (error.message?.includes('User rejected') || error.message?.includes('rejected')) {
         throw new Error('Transaction cancelled by user');
       }
@@ -121,24 +103,18 @@ export function useX402(): UseX402Return {
       }
 
       const paymentRequirements = await initialResponse.json() as PaymentRequirements;
-      console.log('[x402] Received PaymentRequirements:', paymentRequirements);
-
       let txHash: string;
 
       const useDemo = !config?.isProductionMode || useDemoMode;
 
       if (useDemo) {
-        console.log('[x402] Demo mode - generating mock payment');
         txHash = `demo_tx_${Date.now()}_${sessionId}`;
       } else {
-        console.log('[x402] Production mode - submitting payment with wallet');
         if (!wallet.connected || !wallet.address) {
           throw new Error('Wallet not connected');
         }
         txHash = await submitPaymentWithWallet(paymentRequirements, wallet.address);
       }
-
-      console.log('[x402] Confirming payment with server, txHash:', txHash);
 
       // Send transaction hash to server to verify and complete settlement
       const confirmResponse = await fetch(settleUrl, {
@@ -155,7 +131,6 @@ export function useX402(): UseX402Return {
         throw new Error(result.error || 'Payment confirmation failed');
       }
 
-      console.log('[x402] Settlement successful:', result);
       return result as SettleSessionResponse;
     } finally {
       setIsProcessingPayment(false);

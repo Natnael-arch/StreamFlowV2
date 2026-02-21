@@ -29,8 +29,50 @@ import {
   Serializer
 } from "@aptos-labs/ts-sdk";
 
-const BARDOCK_CONTRACT_ADDRESS = "0x00bc9b0ecb6722865cd483e18184957d8043bf6283c56aa9b8a2c1b433d6b31d";
-const MOVEMENT_RPC_URL = "https://testnet.movementnetwork.xyz/v1";
+// Default constants for Movement Bardock Testnet
+const DEFAULT_BARDOCK_CONTRACT_ADDRESS = "0x00bc9b0ecb6722865cd483e18184957d8043bf6283c56aa9b8a2c1b433d6b31d";
+const DEFAULT_MOVEMENT_RPC_URL = "https://testnet.movementnetwork.xyz/v1";
+
+/**
+ * Custom Error Classes for StreamFlow SDK
+ */
+export class StreamFlowError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "StreamFlowError";
+  }
+}
+
+export class InvalidSessionError extends StreamFlowError {
+  constructor(message: string = "No active session found") {
+    super(message);
+    this.name = "InvalidSessionError";
+  }
+}
+
+export class ValidationError extends StreamFlowError {
+  constructor(message: string) {
+    super(message);
+    this.name = "ValidationError";
+  }
+}
+
+export class PaymentRequiredError extends StreamFlowError {
+  public readonly requirements: PaymentRequirements;
+
+  constructor(requirements: PaymentRequirements) {
+    super("Payment required (HTTP 402)");
+    this.name = "PaymentRequiredError";
+    this.requirements = requirements;
+  }
+}
+
+export class BlockchainError extends StreamFlowError {
+  constructor(message: string, public readonly originalError?: any) {
+    super(message);
+    this.name = "BlockchainError";
+  }
+}
 
 export interface TransportAdapter {
   fetch(url: string, options?: RequestInit): Promise<Response>;
@@ -60,6 +102,10 @@ export class StreamFlowClient {
   private costUpdateCallbacks: CostUpdateCallback[] = [];
 
   constructor(options: StreamFlowClientOptions) {
+    if (!options.apiBaseUrl) throw new ValidationError("apiBaseUrl is required");
+    if (!options.creatorAddress) throw new ValidationError("creatorAddress is required");
+    if (options.ratePerSecond <= 0) throw new ValidationError("ratePerSecond must be greater than 0");
+
     this.config = {
       apiBaseUrl: options.apiBaseUrl,
       creatorAddress: options.creatorAddress,
@@ -84,6 +130,10 @@ export class StreamFlowClient {
   }
 
   async startSession(params: { viewerAddress: string }): Promise<StartSessionResult> {
+    if (!params.viewerAddress) {
+      throw new ValidationError("viewerAddress is required to start a session");
+    }
+
     const response = await this.transport.fetch(
       `${this.config.apiBaseUrl}/v1/sessions/start`,
       {
@@ -99,7 +149,7 @@ export class StreamFlowClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Failed to start session" }));
-      throw new Error(error.message || "Failed to start session");
+      throw new StreamFlowError(error.message || "Failed to start session");
     }
 
     const result = await response.json() as StartSessionResult & { session: Session };
@@ -115,7 +165,7 @@ export class StreamFlowClient {
 
   async stopSession(): Promise<StopSessionResult> {
     if (!this.currentSession) {
-      throw new Error("No active session to stop");
+      throw new InvalidSessionError("No active session to stop");
     }
 
     this.stopCostTracking();
@@ -130,7 +180,7 @@ export class StreamFlowClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Failed to stop session" }));
-      throw new Error(error.message || "Failed to stop session");
+      throw new StreamFlowError(error.message || "Failed to stop session");
     }
 
     const result = await response.json() as StopSessionResult & { session: Session };
@@ -146,7 +196,7 @@ export class StreamFlowClient {
 
   async settle(paymentHeader?: string): Promise<SettleSessionResult> {
     if (!this.currentSession) {
-      throw new Error("No session to settle");
+      throw new InvalidSessionError("No session to settle");
     }
 
     const headers: Record<string, string> = {
@@ -172,7 +222,7 @@ export class StreamFlowClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Failed to settle session" }));
-      throw new Error(error.message || "Failed to settle session");
+      throw new StreamFlowError(error.message || "Failed to settle session");
     }
 
     const result = await response.json() as SettleSessionResult;
@@ -190,7 +240,7 @@ export class StreamFlowClient {
 
   async prepareTransaction(): Promise<PrepareTransactionResult> {
     if (!this.currentSession) {
-      throw new Error("No session to prepare transaction for");
+      throw new InvalidSessionError("No session to prepare transaction for");
     }
 
     const viewerAddress = this.wallet
@@ -208,7 +258,7 @@ export class StreamFlowClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Failed to prepare transaction" }));
-      throw new Error(error.message || "Failed to prepare transaction");
+      throw new StreamFlowError(error.message || "Failed to prepare transaction");
     }
 
     return await response.json() as PrepareTransactionResult;
@@ -282,16 +332,6 @@ export class StreamFlowClient {
   }
 }
 
-export class PaymentRequiredError extends Error {
-  public readonly requirements: PaymentRequirements;
-
-  constructor(requirements: PaymentRequirements) {
-    super("Payment required (HTTP 402)");
-    this.name = "PaymentRequiredError";
-    this.requirements = requirements;
-  }
-}
-
 /**
  * MovementClient
  * 
@@ -299,24 +339,29 @@ export class PaymentRequiredError extends Error {
  */
 export class MovementClient {
   private aptos: Aptos;
+  private contractAddress: string;
 
-  constructor() {
+  constructor(rpcUrl: string = DEFAULT_MOVEMENT_RPC_URL, contractAddress: string = DEFAULT_BARDOCK_CONTRACT_ADDRESS) {
     const config = new AptosConfig({
       network: Network.CUSTOM,
-      fullnode: MOVEMENT_RPC_URL,
+      fullnode: rpcUrl,
     });
     this.aptos = new Aptos(config);
+    this.contractAddress = normalizeAddress(contractAddress);
   }
 
   /**
    * Generates the payload for a settle_payment transaction.
    */
-  getSettlementPayload(recipient: string, amount: bigint | string, sessionId: string | number): any {
+  getSettlementPayload(recipient: string, amount: bigint | string, sessionId: string | number): { data: { function: string; typeArguments: string[]; functionArguments: string[] } } {
+    if (!recipient) throw new ValidationError("recipient address is required");
+    if (BigInt(amount) <= 0n) throw new ValidationError("settlement amount must be greater than 0");
+
     return {
       data: {
-        function: `${BARDOCK_CONTRACT_ADDRESS}::settlement::settle_payment`,
+        function: `${this.contractAddress}::settlement::settle_payment`,
         typeArguments: ["0x1::aptos_coin::AptosCoin"],
-        functionArguments: [recipient, amount.toString(), sessionId.toString()],
+        functionArguments: [normalizeAddress(recipient), amount.toString(), sessionId.toString()],
       },
     };
   }
@@ -330,10 +375,14 @@ export class MovementClient {
     amount: bigint | string,
     sessionId: string | number
   ): Promise<{ unsignedTransactionBcsBase64: string; payTo: string; amount: string }> {
+    if (!sender) throw new ValidationError("sender address is required");
+    if (!recipient) throw new ValidationError("recipient address is required");
+    if (BigInt(amount) <= 0n) throw new ValidationError("settlement amount must be greater than 0");
+
     const transaction = await this.aptos.transaction.build.simple({
       sender: normalizeAddress(sender),
       data: {
-        function: `${normalizeAddress(BARDOCK_CONTRACT_ADDRESS)}::settlement::settle_payment`,
+        function: `${this.contractAddress}::settlement::settle_payment`,
         typeArguments: ["0x1::aptos_coin::AptosCoin"],
         functionArguments: [normalizeAddress(recipient), amount.toString(), sessionId.toString()],
       },
@@ -364,14 +413,6 @@ export class MovementClient {
       const sigDeserializer = new Deserializer(signatureBytes);
       const txAuthenticator = (TransactionAuthenticator as any).deserialize(sigDeserializer);
 
-      // Create signed transaction
-      const signedTransaction = new (SignedTransaction as any)(rawTransaction, txAuthenticator);
-
-      // Serialize
-      const serializer = new Serializer();
-      signedTransaction.serialize(serializer);
-      const signedTxBytes = serializer.toUint8Array();
-
       // Submit
       const pendingTx = await (this.aptos.transaction.submit as any).simple({
         signature: txAuthenticator,
@@ -389,8 +430,7 @@ export class MovementClient {
         txHash: confirmedTx.hash,
       };
     } catch (error) {
-      console.error("[MovementClient] Transaction submission failed:", error);
-      return { success: false, txHash: "" };
+      throw new BlockchainError("Transaction submission failed", error);
     }
   }
 
@@ -409,7 +449,7 @@ export class MovementClient {
         return false;
       }
 
-      const eventType = `${normalizeAddress(BARDOCK_CONTRACT_ADDRESS)}::settlement::SettlementEvent`;
+      const eventType = `${this.contractAddress}::settlement::SettlementEvent`;
       const settlementEvent = tx.events.find((e: any) => e.type === eventType);
 
       if (!settlementEvent) {
@@ -423,8 +463,7 @@ export class MovementClient {
 
       return sessionIdMatch && amountMatch;
     } catch (error) {
-      console.error("[MovementClient] Payment verification failed:", error);
-      return false;
+      throw new BlockchainError("Payment verification failed", error);
     }
   }
 }

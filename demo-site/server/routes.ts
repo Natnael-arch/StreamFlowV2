@@ -28,14 +28,12 @@ export async function registerRoutes(
    * Opens a new streaming payment session.
    */
   app.post("/api/session/start", async (req, res) => {
-    console.log("[API] POST /api/session/start - Request received");
-    console.log("[API] Request body:", JSON.stringify(req.body, null, 2));
+    // Start session request received
 
     try {
       const parseResult = startSessionSchema.safeParse(req.body);
 
       if (!parseResult.success) {
-        console.log("[API] Validation error:", parseResult.error.errors);
         return res.status(400).json({
           error: "Invalid request body",
           details: parseResult.error.errors,
@@ -75,8 +73,6 @@ export async function registerRoutes(
         ratePerSecond
       );
 
-      console.log("[API] Session started successfully:", session.sessionId);
-
       const response: StartSessionResponse = {
         sessionId: session.sessionId,
         message: "Payment session started successfully",
@@ -94,8 +90,6 @@ export async function registerRoutes(
    * Stops an active streaming payment session and settles the payment.
    */
   app.post("/api/session/stop", async (req, res) => {
-    console.log("[API] POST /api/session/stop - Request received");
-
     try {
       const parseResult = stopSessionSchema.safeParse(req.body);
 
@@ -132,7 +126,7 @@ export async function registerRoutes(
         await sessionStore.settleSession(sessionId, settlementResult.txHash);
       }
 
-      console.log("[API] Session stopped and settled:", sessionId);
+      // Session stopped
 
       const response: StopSessionResponse = {
         sessionId: stoppedSession.sessionId,
@@ -160,7 +154,7 @@ export async function registerRoutes(
     const { sessionId } = req.params;
     const { senderAddress } = req.body;
 
-    console.log("[API] POST /api/session/:sessionId/prepare-transaction -", sessionId);
+    // Prepare transaction
 
     try {
       if (!senderAddress || typeof senderAddress !== 'string') {
@@ -193,11 +187,10 @@ export async function registerRoutes(
         senderAddress,
         session.creatorAddress,
         amountInOctas,
-        sessionId
+        session.id // Use numeric ID for on-chain transaction
       );
 
-      console.log("[API] Built unsigned transaction for session:", sessionId);
-      console.log("[API] Payment recipient (creator):", session.creatorAddress);
+      // Transaction prepared
 
       return res.status(200).json({
         ...result,
@@ -225,8 +218,7 @@ export async function registerRoutes(
     const { sessionId } = req.params;
     const paymentHeader = req.get("X-PAYMENT");
 
-    console.log("[API] POST /api/session/:sessionId/settle -", sessionId);
-    console.log("[API] X-PAYMENT header present:", !!paymentHeader);
+    // Settle session
 
     try {
       const session = await sessionStore.getSession(sessionId);
@@ -254,8 +246,7 @@ export async function registerRoutes(
       }
 
       if (!paymentHeader) {
-        console.log("[API] No X-PAYMENT header, returning 402 with PaymentRequirements");
-        console.log("[API] Payment will be sent to creator:", session.creatorAddress);
+        // Payment requirements needed
 
         const resourceUrl = `${req.protocol}://${req.get('host')}/api/session/${sessionId}/settle`;
         const paymentRequirements = createPaymentRequirements(
@@ -286,7 +277,7 @@ export async function registerRoutes(
         // Fallback or secondary check using MovementClient if needed, 
         // but verifyPaymentHeader already does on-chain check.
         // For this task, we explicitly use MovementClient.verifyPayment for validation.
-        const isValid = await movementClient.verifyPayment(paymentHeader, sessionId, toOctas(stoppedSession.totalPaid));
+        const isValid = await movementClient.verifyPayment(paymentHeader, stoppedSession.id, toOctas(stoppedSession.totalPaid));
 
         if (!isValid) {
           return res.status(402).json({
@@ -302,8 +293,7 @@ export async function registerRoutes(
 
       await sessionStore.settleSession(sessionId, verification.txHash);
 
-      console.log("[API] Session settled successfully:", sessionId);
-      console.log("[API] Transaction hash:", verification.txHash);
+      console.info(`[API] Session settled: ${sessionId} (tx: ${verification.txHash})`);
 
       const response: SettleSessionResponse = {
         success: true,
@@ -326,7 +316,6 @@ export async function registerRoutes(
    */
   app.get("/api/session/:sessionId", async (req, res) => {
     const { sessionId } = req.params;
-    console.log("[API] GET /api/session/:sessionId -", sessionId);
 
     try {
       const session = await sessionStore.getSession(sessionId);
@@ -361,8 +350,6 @@ export async function registerRoutes(
    * Retrieves all sessions, optionally filtered.
    */
   app.get("/api/sessions", async (req, res) => {
-    console.log("[API] GET /api/sessions");
-
     try {
       const { viewerAddress, creatorAddress, status } = req.query;
 
@@ -447,14 +434,10 @@ export async function registerRoutes(
    * - session_expired: Session timed out without settlement
    */
   app.post("/api/webhook/x402", async (req, res) => {
-    console.log("[API] POST /api/webhook/x402 - Webhook received");
-    console.log("[API] Webhook payload:", JSON.stringify(req.body, null, 2));
-
     try {
       const parseResult = webhookSchema.safeParse(req.body);
 
       if (!parseResult.success) {
-        console.log("[API] Webhook validation error:", parseResult.error.errors);
         return res.status(400).json({
           received: false,
           message: "Invalid webhook payload",
@@ -463,19 +446,18 @@ export async function registerRoutes(
 
       const { eventType, sessionId, txHash, amount, timestamp } = parseResult.data;
 
-      console.log(`[API] Processing webhook event: ${eventType} for session ${sessionId}`);
+      // Processing webhook
 
       const updatedSession = await sessionStore.updateFromWebhook(sessionId, eventType, txHash);
 
       if (!updatedSession) {
-        console.log(`[API] Session not found for webhook: ${sessionId}`);
         return res.status(404).json({
           received: true,
           message: "Session not found",
         } as WebhookResponse);
       }
 
-      console.log(`[API] Webhook processed successfully for session ${sessionId}`);
+      // Webhook processed
 
       return res.status(200).json({
         received: true,
