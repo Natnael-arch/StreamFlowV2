@@ -30,6 +30,9 @@ const allowlist = [
   "xlsx",
   "zod",
   "zod-validation-error",
+  "streamflow-sdk",
+  "@streamflow/shared",
+  "x402plus",
 ];
 
 async function buildAll() {
