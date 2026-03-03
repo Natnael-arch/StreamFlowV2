@@ -23,41 +23,42 @@ StreamFlow is designed for **platforms and developers**, not end users. It provi
 
 ## Example Use Cases
 
-### 1. Live Streaming Platforms
+### 1. Coaching Apps (Sports, Music, Business)
 
-**Scenario**: Viewers pay creators per second while watching live content.
+**Scenario**: Coaches provide 1-on-1 sessions where the user is billed only for the time they are connected and receiving guidance.
 
 ```typescript
-// When viewer clicks "Watch"
-const { sessionId } = await streamflow.startSession(viewerAddress);
-startVideoPlayer();
-showCostCounter();
+// When the coaching session (video/audio) starts
+const { sessionId } = await streamflow.startSession({
+  viewer: clientWallet,
+  creator: coachWallet,
+  ratePerSecond: 0.05, // e.g., $180/hour
+});
 
-// While watching
-// Cost accumulates: $0.001/second = $3.60/hour
+// Session runs...
+// Cost is calculated and displayed in-app in real-time
 
-// When viewer clicks "Leave"
-stopVideoPlayer();
-const { totalPaid } = await streamflow.stopSession(sessionId);
+// When the session completes
+await streamflow.stopSession(sessionId);
 await promptPayment(sessionId);
 ```
 
 **Benefits**:
-- No commitment required from viewers
-- Creators earn for actual watch time
-- Viewers only pay for what they consume
+- **Granular Billing**: Clients pay for the exact minute/second of coaching.
+- **Instant Payouts**: Coaches receive funds immediately upon session settlement.
+- **Trustless**: No need for the platform to hold funds in escrow.
 
 ---
 
-### 2. Study Sessions / Tutoring
+### 2. Study Sessions (Trading Masterclasses, Academic Tutoring)
 
-**Scenario**: Students pay tutors per minute of live help.
+**Scenario**: High-value knowledge sharing where students pay per second of access to a live expert or study group.
 
 ```typescript
-// Tutor accepts student request
+// Student joins the trading floor / tutoring room
 await startSession({
   viewer: studentWallet,
-  creator: tutorWallet,
+  creator: expertWallet,
   ratePerSecond: 0.01, // $0.60/minute at $100/MOVE
 });
 
@@ -66,138 +67,41 @@ await startSession({
 
 // Session ends
 const payment = await settleSession(sessionId);
-// Tutor receives payment immediately
+// Expert receives payment immediately
 ```
 
 **Benefits**:
-- Fair pricing for both parties
-- No hourly minimum commitments
-- Instant payment to tutors
+- **No Entry Barrier**: Students can drop in and out of complex trading sessions without a fixed fee.
+- **Fair Pricing**: Both parties agree on a time-based rate.
+- **Scalable**: Works for 1-on-1 or many-to-1 webinar styles.
 
 ---
 
-### 3. AI Agent Billing
+### 3. Live Performances (Concerts, Street Performers, Digital Busking)
 
-**Scenario**: AI agents charge per second of compute/response time.
+**Scenario**: Virtual stages where viewers pay for the duration they watch a live performance.
 
 ```typescript
-// User starts AI conversation
-const session = await streamflow.startSession(userWallet);
+// When viewer enters the virtual concert
+const { sessionId } = await streamflow.startSession(viewerAddress);
+startVideoPlayer();
+showCostCounter();
 
-// AI responds (takes 5 seconds)
-const response = await ai.generate(prompt);
+// While watching...
+// $0.001/second = $3.60/hour
 
-// Charge for compute time
-await streamflow.stopSession(session.sessionId);
-await settleWithAgentWallet(session);
+// When viewer leaves the performance
+stopVideoPlayer();
+const { totalPaid } = await streamflow.stopSession(sessionId);
+await promptPayment(sessionId);
 ```
 
 **Benefits**:
-- Pay for actual compute used
-- Transparent pricing
-- Automated settlement
+- **Frictionless Support**: Fans can support performers for exactly as long as they stay.
+- **Global Reach**: Secure, instant payments from a global audience.
+- **Direct Support**: Funds flow directly from the viewer to the artist's wallet.
 
 ---
-
-### 4. Creator Content Gates
-
-**Scenario**: Exclusive content unlocked per second of viewing.
-
-```typescript
-// User clicks on premium article/video
-if (!isSubscriber) {
-  const session = await startPayPerSecondSession();
-  
-  // Track reading/watching time
-  onScroll(() => updateCostDisplay());
-  
-  // When user leaves
-  onBeforeUnload(async () => {
-    await settleSession(session);
-  });
-}
-```
-
-**Benefits**:
-- Try before you commit
-- Pay for what you actually read/watch
-- No paywall friction
-
----
-
-### 5. Metered API Access
-
-**Scenario**: API providers charge per second of usage.
-
-```typescript
-// API middleware
-app.use('/api/premium', async (req, res, next) => {
-  const session = await streamflow.startSession(req.userWallet);
-  req.sessionId = session.sessionId;
-  
-  res.on('finish', async () => {
-    await streamflow.stopSession(req.sessionId);
-    // Settle or bill later
-  });
-  
-  next();
-});
-```
-
-**Benefits**:
-- Granular usage billing
-- No rate limit tiers to manage
-- Fair pricing for light users
-
----
-
-### 6. Virtual Events / Conferences
-
-**Scenario**: Attendees pay per minute of attendance.
-
-```typescript
-// User joins event room
-joinRoom(eventId);
-const session = await streamflow.startSession(attendeeWallet);
-
-// During event
-displayRunningCost();
-
-// User leaves or event ends
-leaveRoom();
-const total = await settleSession(session);
-console.log(`Attended for ${total.totalSeconds}s, paid ${total.totalPaid} MOVE`);
-```
-
-**Benefits**:
-- Pay only for time attended
-- No refunds needed for early departure
-- Speakers receive proportional payment
-
----
-
-### 7. Gaming: Play-to-Earn Inverse
-
-**Scenario**: Players pay per second of gameplay, earnings go to game developers or tournament pools.
-
-```typescript
-// Game session starts
-const session = await streamflow.startSession(playerWallet);
-startGame();
-
-// During gameplay
-// 0.0001 MOVE/second = ~$0.36/hour
-
-// Game over
-endGame();
-const { totalPaid } = await settleSession(session);
-// Funds go to tournament pool or developer
-```
-
-**Benefits**:
-- Sustainable game economics
-- No upfront game purchase
-- Play as long as you want
 
 ---
 

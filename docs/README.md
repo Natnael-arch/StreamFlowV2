@@ -1,6 +1,6 @@
 # StreamFlow SDK Documentation
 
-Real-time payment infrastructure for pay-per-second streaming on Movement blockchain.
+Real-time payment infrastructure for coaching apps, study sessions, and live performances on the Movement blockchain.
 
 ## Table of Contents
 
@@ -22,7 +22,13 @@ Real-time payment infrastructure for pay-per-second streaming on Movement blockc
 
 ### What is StreamFlow?
 
-StreamFlow is **real-time payment infrastructure** for applications that need to charge users by the second. It is not a streaming platform itself—it is the payment layer that streaming platforms, creator apps, and AI services integrate to enable pay-per-use billing.
+StreamFlow is **real-time payment infrastructure** specifically designed for applications that charge by the second. While versatile, it is optimized for high-interaction time-based industries:
+
+- **Coaching Apps**: Sports, music, or business coaching billed by the exact duration of the session.
+- **Study Sessions**: Academic tutoring, trading masterclasses, and peer-to-peer knowledge sharing.
+- **Live Performances**: Virtual concerts, street performances, and exclusive live content where viewers pay for the time they watch.
+
+It is not a streaming platform itself—it is the payment layer that these platforms integrate to enable seamless, trustless, pay-per-use billing.
 
 StreamFlow uses the **x402 protocol** (HTTP 402 Payment Required) to create a standardized payment flow where:
 
